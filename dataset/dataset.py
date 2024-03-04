@@ -1,35 +1,71 @@
 import torch
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset
 from torchvision import transforms
 from PIL import Image
 import os
 import json
 
 class EmoSetDataset(Dataset):
-    def __init__(self, data_root, phase='train', transform=None):
+    def __init__(self, data_root, phase='train', num_emotion_classes=8, transform=None):
         self.data_root = data_root
         self.phase = phase
-        self.transform = transform
+        self.num_emotion_classes = num_emotion_classes
+        self.transform = transform or self.default_transforms()
 
-        with open(os.path.join(data_root, f'{phase}.json'), 'r') as file:
-            self.data = json.load(file)
+        # Load metadata
+        self.info = json.load(open(os.path.join(data_root, 'info.json')))
+        self.data = json.load(open(os.path.join(data_root, f'{phase}.json')))
+
+    def default_transforms(self):
+        if self.phase in ['train']:
+            return transforms.Compose([
+                transforms.RandomResizedCrop(224),
+                transforms.RandomHorizontalFlip(),
+                transforms.ToTensor(),
+                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+            ])
+        else:
+            return transforms.Compose([
+                transforms.Resize(256),
+                transforms.CenterCrop(224),
+                transforms.ToTensor(),
+                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+            ])
 
     def __len__(self):
         return len(self.data)
 
     def __getitem__(self, idx):
-        emotion, image_id, image_path, annotation_path = self.data[idx]
-        image = Image.open(os.path.join(self.data_root, image_path)).convert('RGB')
+        item = self.data[idx]
+        # Ensure 'item' is accessed as a dictionary
+        if isinstance(item, list):
+            emotion, image_id = item[0], item[1]
+        elif isinstance(item, dict):
+            emotion, image_id = item['emotion'], item['image_id']
+        else:
+            raise TypeError("Dataset item is neither a list nor a dictionary")
 
+        img_path = os.path.join(self.data_root, f"{image_id}")
+        img = Image.open(img_path).convert('RGB')
+        
         if self.transform:
-            image = self.transform(image)
+            img = self.transform(img)
 
-        return image, emotion
+        output = {
+            'image_id': image_id,
+            'image': img,
+            'emotion_label_idx': torch.tensor(self.info['label2idx'][emotion]),
+        }
 
-transform = transforms.Compose([
-    transforms.Resize((224, 224)),
-    transforms.ToTensor(),
-])
+        return output
 
-train_dataset = EmoSetDataset(data_root='path/to/dataset', phase='train', transform=transform)
-train_loader = DataLoader(train_dataset, batch_size=16, shuffle=True)
+# Example usage
+if __name__ == "__main__":
+    data_root = '../dataset/EmoSet-118K'
+    dataset = EmoSetDataset(data_root=data_root, phase='train', num_emotion_classes=8)
+    dataloader = torch.utils.data.DataLoader(dataset, batch_size=16, shuffle=True)
+
+    for data in dataloader:
+        print(data['image'].shape, data['emotion_label_idx'])
+        # Additional attributes can be accessed similarly
+        break
