@@ -32,7 +32,7 @@ pip install -r requirements.txt
 
 ### Dataset Preparation
 
-Download and prepare the EmoSet dataset. Place it under ./dataset/EmoSet-118K.
+Download and prepare the [EmoSet dataset](https://github.com/JingyuanYY/EmoSet). Unzip it and place it in ./dataset/EmoSet-118K.
 
 ### Training the Model
 
