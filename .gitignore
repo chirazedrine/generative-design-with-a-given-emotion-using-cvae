@@ -49,3 +49,6 @@ coverage.xml
 # Data
 dataset/EmoSet-118K.zip
 dataset/EmoSet-118K/
+
+# Remote scripts
+push_train_model.sh
