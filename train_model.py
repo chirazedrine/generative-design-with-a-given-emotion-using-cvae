@@ -31,7 +31,9 @@ def train(epoch, model, train_loader, optimizer):
     print(f'====> Epoch: {epoch} Average loss: {train_loss / len(train_loader.dataset):.4f}')
 
 def loss_function(recon_x, x, mu, logvar):
-    BCE = F.binary_cross_entropy(recon_x, x.view(-1, 224*224*3), reduction='sum')
+    # Ensure both recon_x and x have the same shape
+    BCE = F.binary_cross_entropy(recon_x.view(-1, 224*224*3), x.view(-1, 224*224*3), reduction='sum')
+    # Calculation for the KL divergence part remains the same
     KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
     return BCE + KLD
 

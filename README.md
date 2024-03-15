@@ -54,7 +54,7 @@ python generate_images.py
 
 - `dataset/`: Dataset preparation scripts.
 - `models/`: Contains the CVAE model definition.
-- `training/`: Training script for the CVAE model.
+<!-- - `training/`: Training script for the CVAE model. -->
 - `generation/`: Script for generating images based on emotions.
 - `requirements.txt`: Project dependencies.
 
